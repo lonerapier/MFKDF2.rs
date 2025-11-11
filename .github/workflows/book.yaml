@@ -1,4 +1,4 @@
-name: Reports
+name: Book
 
 on:
   workflow_run:
@@ -20,17 +20,29 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install mdbook
-        uses: taiki-e/install-action@cargo-binstall
+      - uses: actions/checkout@v4
+      - uses: jontze/action-mdbook@v3
         with:
-          tool: mdbook,mdbook-toc
+          token: ${{secrets.GITHUB_TOKEN}}
+          # Optional Plugins have to be enabled
+          use-linkcheck: true
+          use-mermaid: false
+          use-toc: true
+          use-opengh: true
+          use-admonish: true
+          use-katex: false
+      - name: Show mdbook version
+        run: mdbook --version
+      - name: Show linkchecker version
+        run: mdbook-linkcheck --version
+      - name: Show toc version
+        run: mdbook-toc --version
+      - name: Show open-on-gh version
+        run: mdbook-open-on-gh --version
 
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
 
       - name: Build mdBook
         run: mdbook build docs
@@ -107,7 +119,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment:
-      name: test-reports
+      name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
